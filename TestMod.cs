@@ -58,7 +58,8 @@ namespace TestMod {
 					// render a ring there
 					class273.method_723(class_227.field_2041.field_920./*bonder_shadow*/field_1238, hexIndex, 4f);
 					class273.method_721(class_227.field_2041.field_920./*bonder_ring*/field_1237, hexIndex, Vector2.Zero);
-				}
+                    class273.method_722(class_227.field_2041.field_920./*prismabonder_symbol*/field_1277, hexIndex, new Vector2(0.0f, -3f));
+                }
 				for(int i = 0; i < part.method_1163().field_1909.Length; i++) {
 					HexIndex hexIndex = part.method_1163().field_1909[i];
 					if(hexIndex != new HexIndex(0, 0)) {
@@ -109,6 +110,7 @@ namespace TestMod {
             PartTypes.field_867[25] = VariantTriplex;
 
             // since method_2000 is private, hookgen didn't pick it up (sad)
+            // gotta add the hook here or it breaks on a static initializer
             hook_SolutionEditorBase_method_2000 = new Hook(
                 typeof(SolutionEditorBase).GetMethod("method_2000", BindingFlags.NonPublic | BindingFlags.Instance),
                 typeof(TestMod).GetMethod("OnSolutionEditorBaseMethod2000", BindingFlags.NonPublic | BindingFlags.Static)
