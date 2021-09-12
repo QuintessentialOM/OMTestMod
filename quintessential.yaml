@@ -1,0 +1,3 @@
+Name: TestMod
+Version: 0.0.0
+DLL: "TestMod/bin/Debug/net451/TestMod.dll"
