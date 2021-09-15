@@ -15,7 +15,7 @@ namespace TestMod {
     using AtomTypes = class_175;
     using PartTypes = class_191;
 
-    public class TestMod : QuintessentialMod {
+	public class TestMod : QuintessentialMod {
 
         private static IDetour hook_SolutionEditorBase_method_1996;
 
