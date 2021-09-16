@@ -16,7 +16,7 @@ namespace TestMod {
 		public override void Load() {}
 
 		public override void PostLoad() {
-			Logger.Log("TestMod: PostLoading!");
+			Logger.Log("TestMod: Adding part");
             // by this point, everything should have Happened and I can start messing with parts
             // let's make a triplex bonder in the shape of a multi-bonder
             PartType varTriplex = new PartType();
