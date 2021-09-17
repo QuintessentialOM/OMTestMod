@@ -1,4 +1,9 @@
-﻿using Quintessential;
+﻿using MonoMod.RuntimeDetour;
+using MonoMod.Utils;
+using Quintessential;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace TestMod {
 
@@ -12,6 +17,9 @@ namespace TestMod {
 	public class TestMod : QuintessentialMod {
 
         public static PartType VariantTriplex;
+        public static AtomType Aether, Uranium;
+
+        private static IDetour hook_Sim_method_1832;
 
 		public override void Load() {}
 
@@ -63,14 +71,96 @@ namespace TestMod {
                         float num = new HexRotation(index * 2).ToRadians();
                         renderer.method_522(class_238.field_1989.field_90.field_161 /*bonder_bond*/, new Vector2(-28f, 22f), num);
                         renderer.method_531(class_238.field_1989.field_90.field_254[index] /*prismabond_cylinder_lightmaps[i]*/, class_238.field_1989.field_90.field_166/*bond_cylinder_pattern*/, new HexIndex(0, 0), num);
-
                     }
                 }
             });
 
             QApi.AddPartTypeToPanel(VariantTriplex, PartTypes.field_1775);
+
+            // let's also give Aether a go
+            // any molecule composed only of Aether vanishes upon debonding
+
+            AtomType aether = new AtomType();
+            aether.field_2283/*ID*/ = 64; // FIX: sadly, atoms use byte IDs. this will need some change in Quintessential.
+            aether.field_2284/*Non-local Name*/ = class_134.method_254("Aether");
+            aether.field_2285/*Atomic Name*/ = class_134.method_253("Elemental Aether", string.Empty);
+            aether.field_2286/*Local name*/ = class_134.method_253("Aether", string.Empty);
+            aether.field_2287/*Symbol*/ = class_235.method_615("textures/atoms/leppa/TestMod/aether_symbol");
+            aether.field_2288/*Shadow*/ = class_235.method_615("textures/atoms/leppa/TestMod/aether_shadow");
+            class_229 class229 = new class_229();
+            class229.field_1950/*Base*/ = class_238.field_1989.field_81.field_613.field_627;
+            class229.field_1951/*Colours*/ = class_235.method_615("textures/atoms/leppa/TestMod/aether_colors");
+            class229.field_1952/*Mask*/ = class_238.field_1989.field_81.field_613.field_629;
+            class229.field_1953/*Rimlight*/ = class_238.field_1989.field_81.field_613.field_630;
+            aether.field_2292 = class229;
+            aether.field_2296/*Non-metal?*/ = true;
+            Aether = aether;
+
+            AtomType uranium = new AtomType();
+            uranium.field_2283/*ID*/ = 65; // FIX: sadly, atoms use byte IDs. this will need some change in Quintessential.
+            uranium.field_2284/*Non-local Name*/ = class_134.method_254("Uranium");
+            uranium.field_2285/*Atomic Name*/ = class_134.method_253("Elemental Uranium", string.Empty);
+            uranium.field_2286/*Local name*/ = class_134.method_253("Uranium", string.Empty);
+            uranium.field_2287/*Symbol*/ = class_235.method_615("textures/atoms/leppa/TestMod/uranium_symbol");
+            uranium.field_2288/*Shadow*/ = class_238.field_1989.field_81.field_599;
+            class_8 class8_1 = new class_8();
+            class8_1.field_13/*Diffuse*/ = class_238.field_1989.field_81.field_577;
+            class8_1.field_14/*Lightramp*/ = class_235.method_615("textures/atoms/leppa/TestMod/uranium_lightramp");
+            class8_1.field_15/*Rimlight*/ = class_238.field_1989.field_81.field_601;
+            uranium.field_2291 = class8_1;
+            uranium.field_2294/*Metal?*/ = true;
+            Uranium = uranium;
+
+            Array.Resize(ref AtomTypes.field_1691, AtomTypes.field_1691.Length + 2);
+            var len = AtomTypes.field_1691.Length;
+            AtomTypes.field_1691[len - 2] = Aether;
+            AtomTypes.field_1691[len - 1] = Uranium;
+
+            // we also need to make it obtainable
+
+            On.MoleculeEditorScreen.method_50 += AddElementsToMoleculeEditor;
+            hook_Sim_method_1832 = new Hook(
+                typeof(Sim).GetMethod("method_1832", BindingFlags.Instance | BindingFlags.NonPublic),
+                typeof(TestMod).GetMethod("OnSimMethod1832", BindingFlags.Static | BindingFlags.NonPublic)
+            );
         }
 
-        public override void Unload() {}
+        // quick and dirty, good enough
+        static MethodInfo method_1130_info = typeof(MoleculeEditorScreen).GetMethod("method_1130", BindingFlags.Instance | BindingFlags.NonPublic);
+
+		private void AddElementsToMoleculeEditor(On.MoleculeEditorScreen.orig_method_50 orig, MoleculeEditorScreen self, float param_4858) {
+            orig(self, param_4858);
+            method_1130_info.Invoke(self, new object[] { new Vector2(410, 640), Aether, true });
+            method_1130_info.Invoke(self, new object[] { new Vector2(410, 740), Uranium, true });
+        }
+
+        private delegate void orig_Sim_method_1832(Sim self, bool param_5369);
+        private static void OnSimMethod1832(orig_Sim_method_1832 orig, Sim self, bool param_5369) {
+            orig(self, param_5369);
+            List<Molecule> toRemove = new List<Molecule>();
+            var molecules = new DynamicData(self).Get<List<Molecule>>("field_3823");
+            foreach(var molecule in molecules) {
+				bool hasAether = false, hasNonAether = false;
+                foreach(var atom in molecule.method_1100())
+                    if(atom.Value.field_2275.Equals(Aether))
+                        hasAether = true;
+                    else
+                        hasNonAether = true;
+				if(hasAether && !hasNonAether)
+                    toRemove.Add(molecule);
+			}
+			foreach(var it in toRemove) {
+				foreach(var atom in it.method_1100()) {
+                    var seb = new DynamicData(self).Get<SolutionEditorBase>("field_3818");
+                    //seb.field_3935.Add(new class_228(seb, (enum_7)1, class_187.field_1742.method_492(atom.Key) + new Vector2(147f, 47f), class_238.field_1989.field_90.field_242, 30f, Vector2.Zero, 0.0f));
+                    seb.field_3936.Add(new class_228(seb, (enum_7)1, class_187.field_1742.method_492(atom.Key) + new Vector2(80f, 0.0f), class_238.field_1989.field_90.field_240, 30f, Vector2.Zero, 0.0f));
+                }
+                molecules.Remove(it);
+			}
+        }
+
+		public override void Unload() {
+            hook_Sim_method_1832.Dispose();
+        }
     }
 }
