@@ -23,7 +23,7 @@ namespace TestMod {
 
 		public override void Load() {}
 
-		public override void PostLoad() {
+		public override void LoadPuzzleContent() {
 			Logger.Log("TestMod: Adding part");
             // by this point, everything should have Happened and I can start messing with parts
             // let's make a triplex bonder in the shape of a multi-bonder
@@ -162,5 +162,9 @@ namespace TestMod {
 		public override void Unload() {
             hook_Sim_method_1832.Dispose();
         }
-    }
+
+		public override void PostLoad() {
+			
+		}
+	}
 }
