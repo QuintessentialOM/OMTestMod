@@ -19,12 +19,19 @@ namespace TestMod {
         public static PartType VariantTriplex;
         public static AtomType Aether, Uranium;
 
+        public static class_256 NoSymbol;
+        public static class_256 AetherSymbol;
+
         private static IDetour hook_Sim_method_1832;
 
-		public override void Load() {}
+		public override void Load() {
+            Settings = new TestSettings();
+        }
 
 		public override void LoadPuzzleContent() {
-			Logger.Log("TestMod: Adding part");
+			Logger.Log("TestMod: Adding stuff");
+            NoSymbol = class_235.method_615("textures/atoms/leppa/TestMod/no_symbol");
+            AetherSymbol = class_235.method_615("textures/atoms/leppa/TestMod/aether_symbol");
             // by this point, everything should have Happened and I can start messing with parts
             // let's make a triplex bonder in the shape of a multi-bonder
             PartType varTriplex = new PartType();
@@ -85,7 +92,7 @@ namespace TestMod {
             aether.field_2284/*Non-local Name*/ = class_134.method_254("Aether");
             aether.field_2285/*Atomic Name*/ = class_134.method_253("Elemental Aether", string.Empty);
             aether.field_2286/*Local name*/ = class_134.method_253("Aether", string.Empty);
-            aether.field_2287/*Symbol*/ = class_235.method_615("textures/atoms/leppa/TestMod/aether_symbol");
+            aether.field_2287/*Symbol*/ = AetherSymbol;
             aether.field_2288/*Shadow*/ = class_235.method_615("textures/atoms/leppa/TestMod/aether_shadow");
             class_229 class229 = new class_229();
             class229.field_1950/*Base*/ = class_238.field_1989.field_81.field_613.field_627;
@@ -166,5 +173,18 @@ namespace TestMod {
 		public override void PostLoad() {
 			
 		}
+
+		public override Type SettingsType => typeof(TestSettings);
+
+		public class TestSettings {
+
+            [SettingsLabel("Show Aether Symbol")]
+            public bool AetherSymbol = false;
+        }
+
+		public override void ApplySettings() {
+			base.ApplySettings();
+            Aether.field_2287/*Symbol*/ = ((TestSettings)(Settings)).AetherSymbol ? AetherSymbol : NoSymbol;
+        }
 	}
 }

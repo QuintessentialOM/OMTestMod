@@ -1,3 +1,6 @@
 Name: TestMod
-Version: 1.1.0
+Version: 1.2.0
 DLL: "TestMod/bin/Debug/net451/TestMod.dll"
+Dependencies:
+- Name: Quintessential
+  Version: 0.2.0
