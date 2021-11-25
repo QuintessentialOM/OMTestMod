@@ -20,6 +20,9 @@
     <Reference Include="MonoMod.Utils">
       <HintPath>..\..\..\MonoMod.Utils.dll</HintPath>
     </Reference>
+    <Reference Include="YamlDotNet">
+      <HintPath>..\..\..\YamlDotNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
